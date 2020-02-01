@@ -1,14 +1,9 @@
 package SpritePath;
 
-import java.awt.Color;
 import java.awt.Cursor;
-import java.awt.Dimension;
 import java.awt.FileDialog;
-import java.awt.Graphics;
 import java.awt.Image;
-import java.awt.Point;
 import java.awt.Rectangle;
-import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -44,7 +39,8 @@ enum Codes_Retour
 public class SpritePath extends JPanel implements MouseListener, MouseMotionListener{
 
 	/**
-	 * SpritePath : permet de générer les coorodonnées de chemin d'un sprite
+	 * This tool allows you to create sprite path for MSX system (256 x 212 px), in absolute or relative coordinates.
+	 * The result is in the form of a text file containing a table in C language format.
 	 */
 	private static final long serialVersionUID = 1L;
 
@@ -80,7 +76,7 @@ public class SpritePath extends JPanel implements MouseListener, MouseMotionList
 	private int couleurFond=0xff000000;
 	/* coefficient d'agrandissement de l'image ; par defaut : x2 */
 	int coef = Integer.valueOf((String)cfg.getObject("conf_magnify_default"));
-	/* coordonnées absolues : A ou relatives : R */
+	/* coordonnï¿½es absolues : A ou relatives : R */
 	char format=((String)cfg.getObject("conf_format_default")).charAt(0);
 
 	int maxpt= 54272;
@@ -368,7 +364,7 @@ public class SpritePath extends JPanel implements MouseListener, MouseMotionList
 		public void run() {
 			int tpx, tpy;
 
-			// recalage des coordonnées du point traité par rapport au curseur
+			// recalage des coordonnï¿½es du point traitï¿½ par rapport au curseur
 			tpx=(posx-mdx)/coef;
 			tpy=(posy-mdy)/coef;
 
@@ -440,14 +436,14 @@ public class SpritePath extends JPanel implements MouseListener, MouseMotionList
 		int buttonDown = me.getButton();
 
 		if (buttonDown == MouseEvent.BUTTON1) {
-			// Bouton GAUCHE enfoncé
+			// Bouton GAUCHE enfoncï¿½
 			if (cellBounds != null && cellBounds.contains(posx, posy-5)) {
 				new Thread(dessineChemin).start();
 			}
 		} else if(buttonDown == MouseEvent.BUTTON2) {
-			// Bouton du MILIEU enfoncé
+			// Bouton du MILIEU enfoncï¿½
 		} else if(buttonDown == MouseEvent.BUTTON3) {
-			// Bouton DROIT enfoncé
+			// Bouton DROIT enfoncï¿½
 			if (posy>6) {
 				new Thread(choixCouleur).start();
 			}
