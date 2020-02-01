@@ -2,9 +2,13 @@ package SpritePath;
 
 import java.awt.Color;
 import java.awt.Cursor;
+import java.awt.Dimension;
 import java.awt.FileDialog;
+import java.awt.Graphics;
 import java.awt.Image;
+import java.awt.Point;
 import java.awt.Rectangle;
+import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -40,7 +44,7 @@ enum Codes_Retour
 public class SpritePath extends JPanel implements MouseListener, MouseMotionListener{
 
 	/**
-	 * SpritePath : permet de gÃ©nÃ©rer les coorodonnÃ©es de chemin d'un sprite
+	 * SpritePath : permet de générer les coorodonnées de chemin d'un sprite
 	 */
 	private static final long serialVersionUID = 1L;
 
@@ -76,17 +80,17 @@ public class SpritePath extends JPanel implements MouseListener, MouseMotionList
 	private int couleurFond=0xff000000;
 	/* coefficient d'agrandissement de l'image ; par defaut : x2 */
 	int coef = Integer.valueOf((String)cfg.getObject("conf_magnify_default"));
-	/* coordonnÃ©es absolues : A ou relatives : R */
+	/* coordonnées absolues : A ou relatives : R */
 	char format=((String)cfg.getObject("conf_format_default")).charAt(0);
 
 	int maxpt= 54272;
 	int crdx[] = new int[maxpt];
 	int crdy[] = new int[maxpt];
 	int nbpt=0;
-	int mdx=16,mdy=37;
-	int bordg=36;
-	
+	int mdx=1,mdy=37;
 	public SpritePath(String filename) throws Exception {
+		crdx[0]=0;
+		crdy[0]=0;
 
 		// Ajout d'une barre de menu a la fenetre
 		JMenuBar barreMenu = new JMenuBar();
@@ -108,7 +112,6 @@ public class SpritePath extends JPanel implements MouseListener, MouseMotionList
 		JRadioButtonMenuItem rbMenuItemx1 = new JRadioButtonMenuItem("x1");
 		JRadioButtonMenuItem rbMenuItemx2 = new JRadioButtonMenuItem("x2");
 		JRadioButtonMenuItem rbMenuItemx4 = new JRadioButtonMenuItem("x4");
-		JRadioButtonMenuItem rbMenuItemx8 = new JRadioButtonMenuItem("x8");
 		rbMenuItemx1.setSelected(false);
 		rbMenuItemx1.setMnemonic(KeyEvent.VK_1);
 		group1.add(rbMenuItemx1);
@@ -121,10 +124,6 @@ public class SpritePath extends JPanel implements MouseListener, MouseMotionList
 		rbMenuItemx4.setMnemonic(KeyEvent.VK_4);
 		group1.add(rbMenuItemx4);
 		menu1.add(rbMenuItemx4);
-		rbMenuItemx8.setSelected(false);
-		rbMenuItemx8.setMnemonic(KeyEvent.VK_8);
-		group1.add(rbMenuItemx8);
-		menu1.add(rbMenuItemx8);
 
 		// boutons de choix du format de sortie		
 		menu1.addSeparator();
@@ -217,17 +216,6 @@ public class SpritePath extends JPanel implements MouseListener, MouseMotionList
 				}
 			}
 		});
-		rbMenuItemx8.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				if (coef!=8) {
-					coef = 8;
-					window.setVisible(false);
-					chargeImage(imageFile);
-					//					curseurCadre = curseurCadre_x8;
-					window.setVisible(true);
-				}
-			}
-		});
 
 		rbMenuItemFormatAbs.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -301,13 +289,13 @@ public class SpritePath extends JPanel implements MouseListener, MouseMotionList
 
 		sauve.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
-				System.out.println("Sauve dans "+odir+File.separator+ofile);
+//				System.out.println("Sauve dans "+odir+File.separator+ofile);
 				String restxt="";
 				if (nbpt>0) {
 					restxt+=NL+"{";
 					// format absolu
 					if (format=='A') {
-						for (int i =0; i<nbpt; i++ ) {
+						for (int i=1; i<nbpt; i++ ) {
 							restxt+=Integer.toString(crdx[i])+","+Integer.toString(crdy[i]);
 							if (i<(nbpt-1)) restxt+=",";
 						}
@@ -316,15 +304,13 @@ public class SpritePath extends JPanel implements MouseListener, MouseMotionList
 					if (format=='R'||format=='C') {
 						int dx=0,dy=0;
 						char ad;
-						restxt+=Integer.toString(crdx[0])+","+Integer.toString(crdy[0])+"}"+NL;
+						restxt+=Integer.toString(crdx[1])+","+Integer.toString(crdy[1])+"}"+NL;
 //						restxt+="{0,0,";
 						restxt+="{";
-						for (int i=1; i<nbpt; i++ ) {
+						for (int i=2; i<nbpt; i++ ) {
 							dx=crdx[i]-crdx[i-1];
 							dy=crdy[i]-crdy[i-1];
 							ad=0;
-//							if (dx>-8 && dx<8) {if(dx<0) ad=(char)(-dx+8); else ad=(char)(dx);}
-//							if (dy>-8 && dy<8) {if(dy<0) ad=(char) (ad+((-dy+8)*16)); else ad=(char) (ad+((dy)*16));}
 							if (dx>-8 && dx<8) {if(dx<0) ad=(char)((-dx*2)+1); else ad=(char)(dx*2);}
 							if (dy>-8 && dy<8) {if(dy<0) ad=(char) (ad+((-dy*2)+1)*16); else ad=(char) (ad+((dy)*32));}
 							if(format=='R') restxt+=Integer.toString(dx)+","+Integer.toString(dy);
@@ -333,6 +319,7 @@ public class SpritePath extends JPanel implements MouseListener, MouseMotionList
 						}
 					}
 					restxt+="}"+NL;
+					restxt+=Integer.toString(nbpt-1)+NL;
 					try {
 						FileWriter fse=new FileWriter(outFile,true);
 						fse.write(restxt);
@@ -379,29 +366,27 @@ public class SpritePath extends JPanel implements MouseListener, MouseMotionList
 	final Runnable dessineChemin = new Runnable() {
 		@Override
 		public void run() {
-			ecritPoint(0xffff0000);
+			int tpx, tpy;
+
+			// recalage des coordonnées du point traité par rapport au curseur
+			tpx=(posx-mdx)/coef;
+			tpy=(posy-mdy)/coef;
+
+			if (tpx>=0 && tpx<=255 && tpy>=0 && tpy<=212) {
+				// enregistrement dans le tableau
+				if (!(crdx[nbpt]==tpx && crdy[nbpt]==tpy) && nbpt<maxpt) {
+//					System.out.println("coords: " + tpx + "," + tpy);
+					bufImg.setRGB(tpx, tpy, 0xffff0000);
+					imageScaled.flush();
+					window.repaint();
+					nbpt++;
+					crdx[nbpt]=tpx;
+					crdy[nbpt]=tpy;
+				}
+			}
 		}
 	};
 
-	public void ecritPoint(int couleur) {
-		// recalage des coordonnÃ©es du point traitÃ© par rapport au curseur
-		int tpx=(posx-mdx)/coef;
-		int tpy=(posy-mdy)/coef;
-
-		if (tpx>=0 && tpx<=255 && tpy>=0 && tpy<=211) {
-			System.out.println("coords: " + tpx + "," + tpy);
-			bufImg.setRGB(tpx, tpy, couleur); // 0xffff0000
-			imageScaled.flush();
-			window.repaint();
-			// enregistrement dans le tableau
-			if (crdx[nbpt]!=tpx && crdy[nbpt]!=tpy && nbpt<maxpt) {
-				crdx[nbpt]=tpx;
-				crdy[nbpt]=tpy;
-				nbpt++;
-			}
-		}
-		
-	}
 	// choix de la couleur du fond
 	final Runnable choixCouleur = new Runnable() {
 		@Override
@@ -455,12 +440,14 @@ public class SpritePath extends JPanel implements MouseListener, MouseMotionList
 		int buttonDown = me.getButton();
 
 		if (buttonDown == MouseEvent.BUTTON1) {
-			// Bouton GAUCHE enfoncÃ©
-			new Thread(dessineChemin).start();
+			// Bouton GAUCHE enfoncé
+			if (cellBounds != null && cellBounds.contains(posx, posy-5)) {
+				new Thread(dessineChemin).start();
+			}
 		} else if(buttonDown == MouseEvent.BUTTON2) {
-			// Bouton du MILIEU enfoncÃ©
+			// Bouton du MILIEU enfoncé
 		} else if(buttonDown == MouseEvent.BUTTON3) {
-			// Bouton DROIT enfoncÃ©
+			// Bouton DROIT enfoncé
 			if (posy>6) {
 				new Thread(choixCouleur).start();
 			}
@@ -473,7 +460,20 @@ public class SpritePath extends JPanel implements MouseListener, MouseMotionList
 		posx=me.getX();
 		posy=me.getY();
 
-		ecritPoint(0xff0000ff);
+		int tpx=(posx-mdx)/coef;
+		int tpy=(posy-mdy)/coef;
+
+		if (cellBounds != null && cellBounds.contains(posx, posy-5)) {
+			if (!(crdx[nbpt]==tpx && crdy[nbpt]==tpy) && nbpt<maxpt) {
+//				System.out.println("coords: " + tpx + "," + tpy);
+				bufImg.setRGB(tpx, tpy, 0xff0000ff);
+				imageScaled.flush();
+				window.repaint();
+				nbpt++;
+				crdx[nbpt]=tpx;
+				crdy[nbpt]=tpy;
+			}        	
+		}
 /*		
 		if (cellBounds != null && cellBounds.contains(posx, posy)) {
 			window.setCursor(curseurCroix);
@@ -489,7 +489,7 @@ public class SpritePath extends JPanel implements MouseListener, MouseMotionList
 		final int x = me.getX();
 		final int y = me.getY();
 		/* modifie la forme du curseur en fonction de la zone survolee */
-		if (cellBounds != null && cellBounds.contains(x-((bordg)/2)+2, y-5)) {
+		if (cellBounds != null && cellBounds.contains(x, y-5)) {
 			window.setCursor(curseurCroix);
 		} else {
 			window.setCursor(curseurDefaut);
@@ -532,8 +532,7 @@ public class SpritePath extends JPanel implements MouseListener, MouseMotionList
 
 		// Affichage de la fenetre
 		//        window.setSize(imgw+2, imgh+20);
-//		window.setSize(imgw+6, imgh+70); // determine la taille de la fenetre
-		window.setSize(imgw+bordg, imgh+80); // determine la taille de la fenetre
+		window.setSize(imgw+6, imgh+63); // determine la taille de la fenetre
 		//		window.setResizable(false); // pas de redimensionnement possible
 		//		window.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		window.setLocationRelativeTo(null); // centre la fenetre dans l'ecran
