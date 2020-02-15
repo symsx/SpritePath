@@ -1,5 +1,6 @@
 package SpritePath;
 
+import java.awt.Color;
 import java.awt.Cursor;
 import java.awt.FileDialog;
 import java.awt.Image;
@@ -65,6 +66,8 @@ public class SpritePath extends JPanel implements MouseListener, MouseMotionList
 	File outFile = null;
 	String ofile="path.txt";
 	String odir=".";
+
+	private int buttonClicked;
 	
 	/* curseur fleche */
 	Cursor curseurDefaut = new Cursor(Cursor.DEFAULT_CURSOR);
@@ -74,9 +77,11 @@ public class SpritePath extends JPanel implements MouseListener, MouseMotionList
 	Rectangle cellBounds = new Rectangle(0,31,0,0);
 	/* couleur de fond ; par defaut : noir */
 	private int couleurFond=0xff000000;
+	/* couleur du point ; par defaut : bleue */
+	static Color couleurPoint=Color.BLUE;
 	/* coefficient d'agrandissement de l'image ; par defaut : x2 */
 	int coef = Integer.valueOf((String)cfg.getObject("conf_magnify_default"));
-	/* coordonn�es absolues : A ou relatives : R */
+	/* coordonnees absolues : A ou relatives : R */
 	char format=((String)cfg.getObject("conf_format_default")).charAt(0);
 
 	int maxpt= 54272;
@@ -92,8 +97,7 @@ public class SpritePath extends JPanel implements MouseListener, MouseMotionList
 		JMenuBar barreMenu = new JMenuBar();
 		setJMenuBar(barreMenu);    	
 		// Creation des options du menu
-		JMenu menu1 = new JMenu((String)res.getObject("text_fichier")); // bouton Fichier
-
+		JMenu menu1 = new JMenu((String)res.getObject("text_fichier"));
 		// 
 		JMenuItem openFile = new JMenuItem((String)res.getObject("text_ouvrir_image")); // choix de l'image a charger    	
 		menu1.add(openFile);
@@ -141,6 +145,40 @@ public class SpritePath extends JPanel implements MouseListener, MouseMotionList
 		//		locale = new Locale("fr", "FR");
 		//		locale = new Locale("en", "EN");
 
+		// choix de la couleur du point		
+		menu1.addSeparator();
+		ButtonGroup group3 = new ButtonGroup();
+		JRadioButtonMenuItem rbMenuItemWht = new JRadioButtonMenuItem((String)res.getObject("text_white"));
+		JRadioButtonMenuItem rbMenuItemBlk = new JRadioButtonMenuItem((String)res.getObject("text_black"));
+		JRadioButtonMenuItem rbMenuItemRed = new JRadioButtonMenuItem((String)res.getObject("text_red"));
+		JRadioButtonMenuItem rbMenuItemBlu = new JRadioButtonMenuItem((String)res.getObject("text_blue"));
+		JRadioButtonMenuItem rbMenuItemGre = new JRadioButtonMenuItem((String)res.getObject("text_green"));
+		JRadioButtonMenuItem rbMenuItemYel = new JRadioButtonMenuItem((String)res.getObject("text_yellow"));
+		rbMenuItemWht.setSelected(false);
+		rbMenuItemWht.setMnemonic(KeyEvent.VK_W);
+		group3.add(rbMenuItemWht);
+		menu1.add(rbMenuItemWht);
+		rbMenuItemBlk.setSelected(false);
+		rbMenuItemBlk.setMnemonic(KeyEvent.VK_D);
+		group3.add(rbMenuItemBlk);
+		menu1.add(rbMenuItemBlk);
+		rbMenuItemRed.setSelected(false);
+		rbMenuItemRed.setMnemonic(KeyEvent.VK_R);
+		group3.add(rbMenuItemRed);
+		menu1.add(rbMenuItemRed);
+		rbMenuItemBlu.setSelected(true);
+		rbMenuItemBlu.setMnemonic(KeyEvent.VK_B);
+		group3.add(rbMenuItemBlu);
+		menu1.add(rbMenuItemBlu);
+		rbMenuItemGre.setSelected(false);
+		rbMenuItemGre.setMnemonic(KeyEvent.VK_G);
+		group3.add(rbMenuItemGre);
+		menu1.add(rbMenuItemGre);
+		rbMenuItemYel.setSelected(false);
+		rbMenuItemYel.setMnemonic(KeyEvent.VK_Y);
+		group3.add(rbMenuItemYel);
+		menu1.add(rbMenuItemYel);
+		
 		menu1.addSeparator();
 		JMenuItem aPropos = new JMenuItem((String)res.getObject("text_a_propos")); // fenetre a propos    	
 		menu1.add(aPropos);
@@ -235,6 +273,37 @@ public class SpritePath extends JPanel implements MouseListener, MouseMotionList
 			}
 		});
 
+		rbMenuItemWht.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				couleurPoint=Color.WHITE;
+			}
+		});
+		rbMenuItemBlk.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				couleurPoint=Color.BLACK;
+			}
+		});
+		rbMenuItemRed.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				couleurPoint=Color.RED;
+			}
+		});
+		rbMenuItemBlu.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				couleurPoint=Color.BLUE;
+			}
+		});
+		rbMenuItemGre.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				couleurPoint=Color.GREEN;
+			}
+		});
+		rbMenuItemYel.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				couleurPoint=Color.YELLOW;
+			}
+		});
+
 		openFile.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				FileDialog filedialog = new FileDialog(window, (String)res.getObject("text_choix_fichier_image"), FileDialog.LOAD);
@@ -285,15 +354,15 @@ public class SpritePath extends JPanel implements MouseListener, MouseMotionList
 
 		sauve.addActionListener(new ActionListener(){
 			public void actionPerformed(ActionEvent e){
-//				System.out.println("Sauve dans "+odir+File.separator+ofile);
+				//				System.out.println("Sauve dans "+odir+File.separator+ofile);
 				String restxt="";
 				if (nbpt>0) {
 					restxt+=NL+"{";
 					// format absolu
 					if (format=='A') {
-						for (int i=1; i<nbpt; i++ ) {
+						for (int i=1; i<=nbpt; i++ ) {
 							restxt+=Integer.toString(crdx[i])+","+Integer.toString(crdy[i]);
-							if (i<(nbpt-1)) restxt+=",";
+							if (i<(nbpt)) restxt+=",";
 						}
 					}
 					// format relatif
@@ -301,9 +370,9 @@ public class SpritePath extends JPanel implements MouseListener, MouseMotionList
 						int dx=0,dy=0;
 						char ad;
 						restxt+=Integer.toString(crdx[1])+","+Integer.toString(crdy[1])+"}"+NL;
-//						restxt+="{0,0,";
+						//						restxt+="{0,0,";
 						restxt+="{";
-						for (int i=2; i<nbpt; i++ ) {
+						for (int i=2; i<=nbpt; i++ ) {
 							dx=crdx[i]-crdx[i-1];
 							dy=crdy[i]-crdy[i-1];
 							ad=0;
@@ -311,11 +380,11 @@ public class SpritePath extends JPanel implements MouseListener, MouseMotionList
 							if (dy>-8 && dy<8) {if(dy<0) ad=(char) (ad+((-dy*2)+1)*16); else ad=(char) (ad+((dy)*32));}
 							if(format=='R') restxt+=Integer.toString(dx)+","+Integer.toString(dy);
 							if(format=='C') restxt+=String.format("0x%02X", (int)ad);
-							if (i<(nbpt-1)) restxt+=",";
+							if (i<(nbpt)) restxt+=",";
 						}
 					}
 					restxt+="}"+NL;
-					restxt+=Integer.toString(nbpt-1)+NL;
+					restxt+=Integer.toString(nbpt)+NL;
 					try {
 						FileWriter fse=new FileWriter(outFile,true);
 						fse.write(restxt);
@@ -364,15 +433,15 @@ public class SpritePath extends JPanel implements MouseListener, MouseMotionList
 		public void run() {
 			int tpx, tpy;
 
-			// recalage des coordonn�es du point trait� par rapport au curseur
+			// recalage des coordonnees du point traite par rapport au curseur
 			tpx=(posx-mdx)/coef;
 			tpy=(posy-mdy)/coef;
 
 			if (tpx>=0 && tpx<=255 && tpy>=0 && tpy<=212) {
 				// enregistrement dans le tableau
 				if (!(crdx[nbpt]==tpx && crdy[nbpt]==tpy) && nbpt<maxpt) {
-//					System.out.println("coords: " + tpx + "," + tpy);
-					bufImg.setRGB(tpx, tpy, 0xffff0000);
+					//					System.out.println("coords: " + tpx + "," + tpy);
+					bufImg.setRGB(tpx, tpy, couleurPoint.getRGB());
 					imageScaled.flush();
 					window.repaint();
 					nbpt++;
@@ -384,15 +453,23 @@ public class SpritePath extends JPanel implements MouseListener, MouseMotionList
 	};
 
 	// choix de la couleur du fond
-	final Runnable choixCouleur = new Runnable() {
+	final Runnable suppressionPoint = new Runnable() {
 		@Override
 		public void run() {
-			couleurFond = bufImg.getRGB((posx+1)/coef, (posy-30)/coef);
-			/*
-			bufImg.setRGB((posx+1)/coef, (posy-30)/coef, 0xffffffff);
-			imageScaled.flush();
-			window.repaint();
-			 */
+			int tpx, tpy;
+			tpx=(posx-mdx)/coef;
+			tpy=(posy-mdy)/coef;
+			if (nbpt>0) {
+				tpx=crdx[nbpt];
+				tpy=crdy[nbpt];
+				crdx[nbpt]=0;
+				crdy[nbpt]=0;
+				nbpt--;
+				bufImg.setRGB(tpx, tpy, 0);
+				imageScaled.flush();
+				window.repaint();
+//				System.out.println("coords: " + tpx + "," + tpy);
+			}
 		}
 	};
 
@@ -433,19 +510,19 @@ public class SpritePath extends JPanel implements MouseListener, MouseMotionList
 		posx=me.getX();
 		posy=me.getY();
 
-		int buttonDown = me.getButton();
+		buttonClicked = me.getButton();
 
-		if (buttonDown == MouseEvent.BUTTON1) {
-			// Bouton GAUCHE enfonc�
+		if (buttonClicked == MouseEvent.BUTTON1) {
+			// Bouton GAUCHE
 			if (cellBounds != null && cellBounds.contains(posx, posy-5)) {
 				new Thread(dessineChemin).start();
 			}
-		} else if(buttonDown == MouseEvent.BUTTON2) {
-			// Bouton du MILIEU enfonc�
-		} else if(buttonDown == MouseEvent.BUTTON3) {
-			// Bouton DROIT enfonc�
+		} else if(buttonClicked == MouseEvent.BUTTON2) {
+			// Bouton du MILIEU
+		} else if(buttonClicked == MouseEvent.BUTTON3) {
+			// Bouton DROIT
 			if (posy>6) {
-				new Thread(choixCouleur).start();
+				new Thread(suppressionPoint).start();
 			}
 		}		
 
@@ -459,24 +536,26 @@ public class SpritePath extends JPanel implements MouseListener, MouseMotionList
 		int tpx=(posx-mdx)/coef;
 		int tpy=(posy-mdy)/coef;
 
-		if (cellBounds != null && cellBounds.contains(posx, posy-5)) {
-			if (!(crdx[nbpt]==tpx && crdy[nbpt]==tpy) && nbpt<maxpt) {
-//				System.out.println("coords: " + tpx + "," + tpy);
-				bufImg.setRGB(tpx, tpy, 0xff0000ff);
-				imageScaled.flush();
-				window.repaint();
-				nbpt++;
-				crdx[nbpt]=tpx;
-				crdy[nbpt]=tpy;
-			}        	
+		if (buttonClicked == MouseEvent.BUTTON1) {
+			if (cellBounds != null && cellBounds.contains(posx, posy-5)) {
+				if (!(crdx[nbpt]==tpx && crdy[nbpt]==tpy) && nbpt<maxpt) {
+					//				System.out.println("coords: " + tpx + "," + tpy);
+					bufImg.setRGB(tpx, tpy, couleurPoint.getRGB());
+					imageScaled.flush();
+					window.repaint();
+					nbpt++;
+					crdx[nbpt]=tpx;
+					crdy[nbpt]=tpy;
+				}
+			}
 		}
-/*		
+		/*		
 		if (cellBounds != null && cellBounds.contains(posx, posy)) {
 			window.setCursor(curseurCroix);
 		} else {
 			window.setCursor(curseurDefaut);
 		}		
-		*/
+		 */
 		//		System.out.println("mouseDragged: " + posx + "," + posy);
 	}
 
@@ -494,6 +573,7 @@ public class SpritePath extends JPanel implements MouseListener, MouseMotionList
 
 	@Override
 	public void mousePressed(MouseEvent me) {
+		buttonClicked = me.getButton();
 	}
 
 	@Override
